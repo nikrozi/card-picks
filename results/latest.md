@@ -1,6 +1,6 @@
 # Daily Card Picks
 
-_Updated Mon 28 Sep 2026, 15:52 Romance Daylight Time · 9 fixtures scanned · 2 qualify_
+_Updated Mon 28 Sep 2026, 15:57 CEST · 9 fixtures scanned · 2 qualify_
 
 | Match | Kickoff | Signal | Line | Bet365 | Unibet | Referee | Games | +3.5% | +4.5% |
 |---|---|---|---|---|---|---|---|---|---|
