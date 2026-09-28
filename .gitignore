@@ -1,0 +1,10 @@
+secrets/
+.chrome_profile/
+data/
+__pycache__/
+*.pyc
+*.pkl
+.env
+.venv/
+.claude/
+.cursor/

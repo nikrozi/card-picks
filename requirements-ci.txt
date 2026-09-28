@@ -1,0 +1,11 @@
+# Minimal dependencies for the daily card picks workflow (.github/workflows/daily-picks.yml)
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+selenium>=4.15.0
+undetected-chromedriver>=3.5.5
+setuptools
+pandas>=2.0.0
+numpy>=1.24.0
+thefuzz>=0.22.0
+python-Levenshtein>=0.25.0

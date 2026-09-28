@@ -1,0 +1,55 @@
+name: Daily card picks
+
+on:
+  schedule:
+    - cron: "0 6 * * *"   # 06:00 UTC = 08:00 CEST / 07:00 CET
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-picks
+  cancel-in-progress: false
+
+jobs:
+  picks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TZ: Europe/Copenhagen   # kickoff times are parsed in this timezone
+      ODDSAPI_KEY: ${{ secrets.ODDSAPI_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-ci.txt
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements-ci.txt
+          sudo apt-get install -y xvfb
+          echo "CHROME_VERSION_MAIN=$(google-chrome --version | grep -oP '\d+' | head -1)" >> "$GITHUB_ENV"
+
+      - name: Scrape referee fixtures (oddalerts.com)
+        run: xvfb-run -a python -m src.scrapers.referee
+
+      - name: Filter by referee criteria
+        run: python -m src.analysis.referee_filter
+
+      - name: Fetch Bet365 / Unibet card odds
+        run: python -m src.scrapers.theodds
+
+      - name: Build report
+        run: python -m src.report
+
+      - name: Publish results/latest.md
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results/latest.md
+          git diff --cached --quiet || git commit -m "Card picks $(date +%F)"
+          git push
