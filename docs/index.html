@@ -193,41 +193,29 @@
         ? metaLine.replace(/^_|_$/g, "")
         : "";
 
-      // Parse table rows (skip header + separator)
-      const tableRows = lines.filter(l => l.startsWith("|") && !l.startsWith("|---") && !l.startsWith("| Match"));
+      // Parse table rows — skip header, separator, and continuation rows (↳)
+      const tableRows = lines.filter(l =>
+        l.startsWith("|") &&
+        !l.startsWith("|---") &&
+        !l.startsWith("| Match") &&
+        !l.trimStart().startsWith("| ↳")
+      );
       const picks = [];
-      let current = null;
 
       for (const row of tableRows) {
         const cells = row.split("|").slice(1, -1).map(c => c.trim());
         if (cells.length < 6) continue;
-
-        const isContinuation = cells[0] === "↳";
-
-        if (!isContinuation) {
-          if (current) picks.push(current);
-          const [match, kickoff, signalRaw, line, bet365, unibet, referee, games, p35, p45] = cells;
-          current = {
-            match,
-            kickoff,
-            signal: signalRaw.replace(/\*\*/g, "").toLowerCase(),
-            referee, games,
-            p35: p35 || "", p45: p45 || "",
-            lines: [],
-          };
-          if (line && line !== "—") {
-            current.lines.push({ line, bet365, unibet });
-          } else if (bet365 && bet365 !== "odds not yet open") {
-            // no specific line but odds present
-          }
-        } else if (current) {
-          const [, , , line, bet365, unibet] = cells;
-          if (line && line !== "—") {
-            current.lines.push({ line, bet365, unibet });
-          }
-        }
+        const [match, kickoff, signalRaw, line, bet365, unibet, referee, games, p35, p45] = cells;
+        picks.push({
+          match,
+          kickoff,
+          signal: signalRaw.replace(/\*\*/g, "").toLowerCase(),
+          line: line && line !== "—" ? line : null,
+          bet365, unibet,
+          referee, games,
+          p35: p35 || "", p45: p45 || "",
+        });
       }
-      if (current) picks.push(current);
 
       const container = document.getElementById("cards");
 
@@ -242,18 +230,17 @@
         const badgeText = isOver ? "OVER" : "UNDER";
 
         const oddsHtml = (() => {
-          if (!p.lines.length) return `<p class="no-odds">Odds not yet available</p>`;
-          return p.lines.map(l => {
-            const chips = [];
-            if (l.bet365 && l.bet365 !== "—" && l.bet365 !== "odds not yet open")
-              chips.push(`<span class="odds-chip"><span>Bet365</span>${l.bet365}</span>`);
-            if (l.unibet && l.unibet !== "—" && l.unibet !== "odds not yet open")
-              chips.push(`<span class="odds-chip"><span>Unibet</span>${l.unibet}</span>`);
-            return `<div class="odds-row">
-              <span class="odds-line">${l.line}</span>
-              <div class="odds-book">${chips.join("") || '<span style="color:var(--muted);font-size:.82rem">—</span>'}</div>
-            </div>`;
-          }).join("");
+          const chips = [];
+          if (p.bet365 && p.bet365 !== "—" && p.bet365 !== "odds not yet open")
+            chips.push(`<span class="odds-chip"><span>Bet365</span>${p.bet365}</span>`);
+          if (p.unibet && p.unibet !== "—" && p.unibet !== "odds not yet open")
+            chips.push(`<span class="odds-chip"><span>Unibet</span>${p.unibet}</span>`);
+          if (!chips.length) return `<p class="no-odds">Odds not yet available</p>`;
+          const lineLabel = p.line || "";
+          return `<div class="odds-row">
+            <span class="odds-line">${lineLabel}</span>
+            <div class="odds-book">${chips.join("")}</div>
+          </div>`;
         })();
 
         const refHtml = p.referee

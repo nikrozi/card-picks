@@ -48,16 +48,18 @@ def _find_odds_row(odds_df, home, away):
     return None
 
 
+TARGET_LINE = {"over": "3.5", "under": "4.5"}
+
+
 def _lines_for(row, side):
-    """[(line, {bookmaker: odds})] for the signal side, e.g. side='over'."""
-    lines = {}
-    for col in row.index:
-        for key, label in BOOKMAKERS:
-            suffix = f"_{key}"
-            if col.startswith(f"{side}_") and col.endswith(suffix) and pd.notna(row[col]):
-                line = col[len(side) + 1:-len(suffix)].replace("_", ".")
-                lines.setdefault(line, {})[label] = float(row[col])
-    return sorted(lines.items(), key=lambda kv: float(kv[0]))
+    """Returns odds for the one line we bet: Over 3.5 or Under 4.5."""
+    target = TARGET_LINE[side].replace(".", "_")
+    result = {}
+    for key, label in BOOKMAKERS:
+        col = f"{side}_{target}_{key}"
+        if col in row.index and pd.notna(row[col]):
+            result[label] = float(row[col])
+    return [(TARGET_LINE[side], result)] if result else []
 
 
 def _fmt(v):
