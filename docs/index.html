@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Card Picks</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2a2d3a;
+      --text: #e8eaf0;
+      --muted: #6b7280;
+      --over: #22c55e;
+      --under: #3b82f6;
+      --accent: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    #meta {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 0.4rem;
+    }
+
+    #cards {
+      max-width: 620px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .pick-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .pick-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .match-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .signal-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .signal-over  { background: rgba(34,197,94,0.15);  color: var(--over); }
+    .signal-under { background: rgba(59,130,246,0.15); color: var(--under); }
+
+    .kickoff {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-top: 0.3rem;
+    }
+
+    .odds-section {
+      margin-top: 1rem;
+      border-top: 1px solid var(--border);
+      padding-top: 0.9rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .odds-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.9rem;
+    }
+
+    .odds-line {
+      color: var(--muted);
+      min-width: 70px;
+    }
+
+    .odds-book {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .odds-chip {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.2rem 0.55rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .odds-chip span {
+      color: var(--muted);
+      font-weight: 400;
+      font-size: 0.75rem;
+      margin-right: 0.2rem;
+    }
+
+    .no-odds {
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-style: italic;
+    }
+
+    .ref-row {
+      margin-top: 0.75rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    #empty {
+      text-align: center;
+      color: var(--muted);
+      margin-top: 4rem;
+      font-size: 1rem;
+    }
+
+    #error {
+      text-align: center;
+      color: #ef4444;
+      margin-top: 4rem;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Card Picks</h1>
+    <p id="meta">Loading…</p>
+  </header>
+  <div id="cards"></div>
+  <p id="empty" style="display:none">No qualifying matches today.</p>
+  <p id="error" style="display:none"></p>
+
+  <script>
+    const RAW_URL =
+      "https://raw.githubusercontent.com/nikrozi/card-picks/main/results/latest.md";
+
+    async function load() {
+      try {
+        const res = await fetch(RAW_URL + "?_=" + Date.now());
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const text = await res.text();
+        render(text);
+      } catch (e) {
+        document.getElementById("error").style.display = "";
+        document.getElementById("error").textContent = "Could not load picks: " + e.message;
+        document.getElementById("meta").textContent = "";
+      }
+    }
+
+    function render(md) {
+      const lines = md.split("\n");
+
+      // Extract meta line
+      const metaLine = lines.find(l => l.startsWith("_Updated"));
+      document.getElementById("meta").textContent = metaLine
+        ? metaLine.replace(/^_|_$/g, "")
+        : "";
+
+      // Parse table rows (skip header + separator)
+      const tableRows = lines.filter(l => l.startsWith("|") && !l.startsWith("|---") && !l.startsWith("| Match"));
+      const picks = [];
+      let current = null;
+
+      for (const row of tableRows) {
+        const cells = row.split("|").slice(1, -1).map(c => c.trim());
+        if (cells.length < 6) continue;
+
+        const isContinuation = cells[0] === "↳";
+
+        if (!isContinuation) {
+          if (current) picks.push(current);
+          const [match, kickoff, signalRaw, line, bet365, unibet, referee, games, p35, p45] = cells;
+          current = {
+            match,
+            kickoff,
+            signal: signalRaw.replace(/\*\*/g, "").toLowerCase(),
+            referee, games,
+            p35: p35 || "", p45: p45 || "",
+            lines: [],
+          };
+          if (line && line !== "—") {
+            current.lines.push({ line, bet365, unibet });
+          } else if (bet365 && bet365 !== "odds not yet open") {
+            // no specific line but odds present
+          }
+        } else if (current) {
+          const [, , , line, bet365, unibet] = cells;
+          if (line && line !== "—") {
+            current.lines.push({ line, bet365, unibet });
+          }
+        }
+      }
+      if (current) picks.push(current);
+
+      const container = document.getElementById("cards");
+
+      if (!picks.length) {
+        document.getElementById("empty").style.display = "";
+        return;
+      }
+
+      picks.forEach(p => {
+        const isOver = p.signal.includes("over");
+        const badgeClass = isOver ? "signal-over" : "signal-under";
+        const badgeText = isOver ? "OVER" : "UNDER";
+
+        const oddsHtml = (() => {
+          if (!p.lines.length) return `<p class="no-odds">Odds not yet available</p>`;
+          return p.lines.map(l => {
+            const chips = [];
+            if (l.bet365 && l.bet365 !== "—" && l.bet365 !== "odds not yet open")
+              chips.push(`<span class="odds-chip"><span>Bet365</span>${l.bet365}</span>`);
+            if (l.unibet && l.unibet !== "—" && l.unibet !== "odds not yet open")
+              chips.push(`<span class="odds-chip"><span>Unibet</span>${l.unibet}</span>`);
+            return `<div class="odds-row">
+              <span class="odds-line">${l.line}</span>
+              <div class="odds-book">${chips.join("") || '<span style="color:var(--muted);font-size:.82rem">—</span>'}</div>
+            </div>`;
+          }).join("");
+        })();
+
+        const refHtml = p.referee
+          ? `<div class="ref-row">Referee: ${p.referee}${p.games ? " · " + p.games + " games" : ""}${p.p35 ? " · +" + p.p35 : ""}${p.p45 ? " / +" + p.p45 : ""}</div>`
+          : "";
+
+        const card = document.createElement("div");
+        card.className = "pick-card";
+        card.innerHTML = `
+          <div class="pick-header">
+            <span class="match-name">${p.match}</span>
+            <span class="signal-badge ${badgeClass}">${badgeText}</span>
+          </div>
+          <div class="kickoff">${p.kickoff || ""}</div>
+          <div class="odds-section">${oddsHtml}</div>
+          ${refHtml}
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    load();
+  </script>
+</body>
+</html>
