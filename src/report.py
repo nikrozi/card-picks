@@ -108,8 +108,6 @@ def build_report():
         lines = _lines_for(row, side) if row is not None else []
 
         if not lines:
-            out.append(f"| {match} | {ko_str} | **{side.upper()}** | — | "
-                       f"odds not yet open | odds not yet open | {ref} |")
             continue
         for i, (line, books) in enumerate(lines):
             first = i == 0
