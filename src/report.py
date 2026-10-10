@@ -49,15 +49,17 @@ def _find_odds_row(odds_df, home, away):
 
 
 TARGET_LINE = {"over": "3.5", "under": "4.5"}
+MIN_ODDS = 1.75
 
 
 def _lines_for(row, side):
-    """Returns odds for the one line we bet: Over 3.5 or Under 4.5."""
+    """Returns odds for the one line we bet: Over 3.5 or Under 4.5.
+    Returns empty list if no bookmaker meets the minimum odds threshold."""
     target = TARGET_LINE[side].replace(".", "_")
     result = {}
     for key, label in BOOKMAKERS:
         col = f"{side}_{target}_{key}"
-        if col in row.index and pd.notna(row[col]):
+        if col in row.index and pd.notna(row[col]) and float(row[col]) >= MIN_ODDS:
             result[label] = float(row[col])
     return [(TARGET_LINE[side], result)] if result else []
 
