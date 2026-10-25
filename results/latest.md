@@ -1,9 +1,8 @@
 # Daily Card Picks
 
-_Updated Sat 24 Oct 2026, 12:18 CEST · 95 fixtures scanned · 26 qualify_
+_Updated Sun 25 Oct 2026, 11:44 CET · 49 fixtures scanned · 15 qualify_
 
 | Match | Kickoff | Signal | Line | Bet365 | Unibet | Referee | Games | +3.5% | +4.5% |
 |---|---|---|---|---|---|---|---|---|---|
-| Leganes vs Mallorca | Sat 24 Oct 16:15 | **UNDER** | Under 4.5 | 2.00 | — | Olatz Rivera Olmedo | 156 | 40% | 29% |
-
-Skipped (already kicked off): Dallas vs SJ Earthquakes, Houston Dynamo vs Minnesota United, Colorado Rapids vs Vancouver Whitecaps, San Lorenzo vs Newell's Old Boys, Rosario Central vs Huracán
+| Lecce vs Juventus | Sun 25 Oct 18:00 | **OVER** | Over 3.5 | 1.77 | 1.78 | Fabio Maresca | 150 | 81% | 63% |
+| Udinese vs AC Milan | Sun 25 Oct 20:45 | **OVER** | Over 3.5 | 1.80 | 1.83 | Matteo Marcenaro | 126 | 72% | 56% |
